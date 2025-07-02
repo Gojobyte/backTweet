@@ -1,22 +1,28 @@
-const User = require("../models/User");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-
-// REGISTER
 const register = async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, firstName, lastName, birthDate, gender } = req.body;
   if (!username || !email || !password)
-    return res.status(400).json({ error: "Tous les champs sont requis" });
+    return res.status(400).json({ error: "Tous les champs requis ne sont pas remplis" });
 
   const existingUser = await User.findOne({ email });
   if (existingUser)
     return res.status(400).json({ error: "Email déjà utilisé" });
 
   const hashedPwd = await bcrypt.hash(password, 10);
-  const newUser = await User.create({ username, email, password: hashedPwd });
+
+  const newUser = await User.create({
+    username,
+    email,
+    password: hashedPwd,
+    firstName,
+    lastName,
+    birthDate,
+    gender,
+  });
+
+  
 
   const token = jwt.sign(
-    { id: newUser._id, username: newUser.username },
+    { id: newUser._id },
     process.env.JWT_SECRET,
     { expiresIn: "1d" }
   );
@@ -28,11 +34,14 @@ const register = async (req, res) => {
       id: newUser._id,
       username: newUser.username,
       email: newUser.email,
-    }
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      birthDate: newUser.birthDate,
+      gender: newUser.gender,
+    },
   });
 };
 
-// LOGIN
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -54,8 +63,15 @@ const login = async (req, res) => {
       id: user._id,
       username: user.username,
       email: user.email,
-    }
+      firstName: user.firstName,
+      lastName: user.lastName,
+      birthDate: user.birthDate,
+      gender: user.gender,
+    },
   });
 };
 
-module.exports = { register, login };
+module.exports = {
+  register,
+  login,
+};
